@@ -44,7 +44,8 @@ def GRUClassifier(X, k_layers=3, k_hidden=16,
     return model
 
 # GRU encoder
-def GRUEncoder(X, l2=0.001, dropout=1e-6, lr=0.006,seed=42):
+def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3, 
+                  l2=0.001, dropout=1e-6, lr=0.006, seed=42):
     
     tf.random.set_seed(seed)
     regularizer = keras.regularizers.l2(l2)
@@ -58,21 +59,27 @@ def GRUEncoder(X, l2=0.001, dropout=1e-6, lr=0.006,seed=42):
         https://www.tensorflow.org/guide/keras/masking_and_padding
         https://gist.github.com/ragulpr/601486471549cfa26fe4af36a1fade21
     '''
-    model = keras.models.Sequential([layers.Masking(mask_value=0.0, 
-                                                             input_shape=[None, X.shape[-1]]),
-                                     CustomGRU(16,return_sequences=True),
-                                     CustomGRU(16,return_sequences=True),
-                                     CustomGRU(16,return_sequences=True),
-                                     layers.TimeDistributed(layers.Dense(3,activation='linear')),
-                                     layers.TimeDistributed(layers.Dense(15,activation='softmax'))
-                                    ])
-
+    input_layers = [layers.Masking(mask_value=0.0, 
+                                   input_shape = [None, X.shape[-1]])]
+    
+    hidden_layers = []
+    for ii in range(k_layers):
+        hidden_layers.append(CustomGRU(k_hidden,return_sequences=True))
+        
+    DR_layer = [layers.TimeDistributed(layers.Dense(3,activation='linear'))]
+    output_layer = [layers.TimeDistributed(layers.Dense(15,activation='softmax'))]
+    
     optimizer = keras.optimizers.Adam(lr=lr)
+    
+    model = keras.models.Sequential(input_layers +
+                                    hidden_layers +
+                                    DR_layer +
+                                    output_layer)
+    
     model.compile(loss='sparse_categorical_crossentropy',
                       optimizer=optimizer,metrics=['sparse_categorical_accuracy'])
     
     return model
-
 
 '''
 classifier (FeedForward)
