@@ -98,7 +98,7 @@ def _train(df, args, params):
         train classifier
         '''
         model = FFClassifier(X_train,params['k_hidden'],
-                             params['k_layers'])
+                             params['k_layers'], k_class = args.k_class)
 
         model.fit(X_train,y_train,epochs=args.num_epochs,
               validation_split=0.2,batch_size=args.batch_size,verbose=0)
@@ -189,7 +189,7 @@ def _test(df,args,params):
     '''
     then = time.time()
     model = FFClassifier(X_train,params['k_hidden'],
-                             params['k_layers'])
+                             params['k_layers'], k_class = args.k_class)
     model.fit(X_train,y_train,epochs=args.num_epochs,
               validation_split=0.2,batch_size=args.batch_size,verbose=0)
     
