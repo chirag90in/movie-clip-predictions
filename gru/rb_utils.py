@@ -135,7 +135,6 @@ def _get_results(args, bhv, num_epochs = 10,k_param = 10):
         res_path += (
             '_kfold_%d_k_hidden_%d' %(args.k_fold, k_param) +
             '_k_layers_%d_batch_size_%d' %(args.k_layers, args.batch_size) +
-            '_dropout_%s_l2_%s_lr_%s' %(str(args.dropout),str(args.l2),str(args.lr)) +
             '_num_epochs_%d_z_%d.pkl' %(num_epochs, args.zscore))
     elif args.model_type == 'tcn':
         res_path += (
