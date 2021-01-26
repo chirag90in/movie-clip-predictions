@@ -46,12 +46,10 @@ def permute(coeffs):
                     coefficients are permuted
     '''
     permuted_coeffs = []
-    for ii, coeff in enumerate(coeffs):
+    for coeff in coeffs:
         coeff_copy = coeff.copy()
-        if ii == 0:
-            permuted_coeffs.append(coeff_copy)
-        else:
-            permuted_coeffs.append(np.random.shuffle(coeff_copy))
+        np.random.shuffle(coeff_copy)
+        permuted_coeffs.append(coeff_copy)
     return permuted_coeffs
 
 
