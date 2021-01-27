@@ -5,7 +5,6 @@ from sklearn.metrics import r2_score
 
 from functools import partial
 
-
 '''
 classification
 '''
@@ -102,9 +101,8 @@ def FFClassifier(X,k_hidden,k_layers,k_class):
     return model
 
 '''
-regression
+regression: GRU
 '''
-
 def GRURegressor(X,k_layers=3, k_hidden=16, 
                  l2=0, dropout=0, lr=0.001,seed=42):
     tf.random.set_seed(seed)
@@ -137,32 +135,20 @@ def GRURegressor(X,k_layers=3, k_hidden=16,
     
     return model
 
-
-
-
-def GRURegressorOLD(l2=0, dropout=0, lr=0.001,seed=42):
-    tf.random.set_seed(seed)
-    regularizer = keras.regularizers.l2(l2)
-    CustomGRU = partial(keras.layers.GRU,
-                            kernel_regularizer=regularizer,
-                            dropout=dropout,
-                            recurrent_dropout=dropout
-                           )
+'''
+regression: FF
+'''
+def FFRegressor (X,k_hidden,k_layers):
+    input_layers = [layers.Masking(mask_value=0.0, input_shape = [X.shape[-2], X.shape[-1]])]
     
-    '''
-    For masking, refer: 
-        https://www.tensorflow.org/guide/keras/masking_and_padding
-        https://gist.github.com/ragulpr/601486471549cfa26fe4af36a1fade21
-    '''
-    model = keras.models.Sequential([layers.Masking(mask_value=0.0, 
-                                                             input_shape=[None, 300]),
-                                     CustomGRU(16,return_sequences=True),
-                                     CustomGRU(16,return_sequences=True),
-                                     CustomGRU(16,return_sequences=True),
-                                     layers.TimeDistributed(layers.Dense(1,activation='linear'))
-                                    ])
-    # Optimizer
-    optimizer = keras.optimizers.Adam(lr=lr)
-    model.compile(loss='mse',
-                      optimizer=optimizer)
+    hidden_layers = []
+    for ii in range(k_layers):
+        hidden_layers.append(layers.Dense(k_hidden))
+    
+    output_layer = [layers.Dense(1,activation='linear')]
+
+    model = keras.models.Sequential(input_layers+hidden_layers+output_layer)
+    
+    optimizer = keras.optimizers.Adam()
+    model.compile(loss='mse', optimizer=optimizer)
     return model
