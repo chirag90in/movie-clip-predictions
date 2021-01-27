@@ -16,11 +16,6 @@ ml
 from sklearn.model_selection import KFold
 import tensorflow as tf
 
-############################
-import torch
-from torch.nn.utils.rnn import pad_sequence
-############################
-
 from gru.models import GRURegressor
 model_type = 'gru'
 '''
