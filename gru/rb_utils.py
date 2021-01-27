@@ -65,10 +65,10 @@ def dnn_score(model, X, Y, C, X_len, max_length,
     if return_states:
         print('Return states feature not programmed')
     else:
-        if model_type == 'gru':
-            Y_HAT = tf.squeeze(model.predict(X),2)
-        else:
-            print('Other models not programmed')
+        #if model_type == 'gru':
+        Y_HAT = tf.squeeze(model.predict(X),2)
+        #else:
+        #    print('Other models not programmed')
             
     # to numpy for saving
     Y = Y.copy()
@@ -310,7 +310,7 @@ def cv_agg(args, bhv, k_param,
     Return:
         train_acc, val_acc
     """
-    if args.model_type in ['gru']:
+    if args.model_type in ['gru','ff']:
         print(k_param,num_epochs)
         r = _get_results(args, bhv, num_epochs = num_epochs, 
                          k_param = k_param)
@@ -321,7 +321,7 @@ def cv_agg(args, bhv, k_param,
     clip_train_acc = np.zeros(len(args.clip_names))
     clip_val_acc = np.zeros(len(args.clip_names))
     for ii, clip in enumerate(args.clip_names):
-        if args.model_type in ['gru']:
+        if args.model_type in ['gru','ff']:
             t, v = get_cv_tbest(args, clip, r, score)
         elif args.model_type in ['cpm', 'bbs']:
             t, v = get_static(args, clip, r, score)
@@ -348,7 +348,7 @@ def get_grid_acc(args, bhv, score,
     Returns:
         heat_map: acc (num_epochs x k_hidden)
     """
-    if args.model_type in ['gru']:
+    if args.model_type in ['gru','ff']:
         heat_map_train = np.zeros(
             (len(args.num_epochs), len(args.k_param)))
         heat_map_val = np.zeros(
@@ -388,7 +388,7 @@ def get_best_param(args, bhv, score,
     _, heat_map = get_grid_acc(args, bhv, score, criteria) 
     # second element in tuple is inner cv accuracy
     
-    if args.model_type in ['gru']:
+    if args.model_type in ['gru','ff']:
         i_star, j_star = np.unravel_index(
             heat_map.argmax(), heat_map.shape)
         
