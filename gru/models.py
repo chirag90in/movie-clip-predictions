@@ -9,8 +9,21 @@ from functools import partial
 classification
 '''
 # GRU clip classifier
-def GRUClassifier(X, k_layers=3, k_hidden=16, 
+def GRUClassifier(X, k_layers=1, k_hidden=32, k_class=15,
                   l2=0.001, dropout=1e-6, lr=0.006, seed=42):
+    
+    """
+    Parameters
+    ---------
+    X: tensor (batch x time x feat)
+    k_layers: int, number of hidden layers
+    k_hidden: int, number of units
+    k_class: int, number of classes
+    
+    Returns
+    -------
+    model: complied model
+    """
     
     tf.random.set_seed(seed)
     regularizer = keras.regularizers.l2(l2)
@@ -31,7 +44,7 @@ def GRUClassifier(X, k_layers=3, k_hidden=16,
     for ii in range(k_layers):
         hidden_layers.append(CustomGRU(k_hidden,return_sequences=True))
         
-    output_layer = [layers.TimeDistributed(layers.Dense(15,activation='softmax'))]
+    output_layer = [layers.TimeDistributed(layers.Dense(k_class,activation='softmax'))]
     
     optimizer = keras.optimizers.Adam(lr=lr)
     
@@ -43,8 +56,25 @@ def GRUClassifier(X, k_layers=3, k_hidden=16,
     return model
 
 # GRU encoder
-def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3, 
-                  l2=0.001, dropout=1e-6, lr=0.006, seed=42):
+def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3,
+               k_class = 15,
+               l2=0.001, dropout=1e-6, lr=0.006, seed=42):
+    
+    '''
+    GRU Encoder: classification after supervised dim reduction
+    
+    Parameters
+    ----------
+    X: tensor (batch x time x feat)
+    k_layers: int, number of hidden layers
+    k_hidden: int, number of units
+    k_dim: int, reduce to k_dim
+    k_class: int, number of classes
+    
+    Returns
+    -------
+    model: complied model
+    '''
     
     tf.random.set_seed(seed)
     regularizer = keras.regularizers.l2(l2)
@@ -65,8 +95,8 @@ def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3,
     for ii in range(k_layers):
         hidden_layers.append(CustomGRU(k_hidden,return_sequences=True))
         
-    DR_layer = [layers.TimeDistributed(layers.Dense(3,activation='linear'))]
-    output_layer = [layers.TimeDistributed(layers.Dense(15,activation='softmax'))]
+    DR_layer = [layers.TimeDistributed(layers.Dense(k_dim,activation='linear'))]
+    output_layer = [layers.TimeDistributed(layers.Dense(k_class,activation='softmax'))]
     
     optimizer = keras.optimizers.Adam(lr=lr)
     
@@ -85,6 +115,21 @@ classifier (FeedForward)
 k_feat: (k_hidden:)*k_layers: k_class
 '''
 def FFClassifier(X,k_hidden,k_layers,k_class,seed=42):
+    '''
+    Feed-forward network classifier
+    
+    Parameters
+    ----------
+    X: tensor (batch x time x feat)
+    k_layers: int, number of hidden layers
+    k_hidden: int, number of units
+    k_class: int, number of classes
+    
+    Returns
+    -------
+    model: complied model
+    '''
+        
     tf.random.set_seed(seed)
     input_layers = [layers.Masking(mask_value=0.0, input_shape = [X.shape[-2], X.shape[-1]])]
     
@@ -106,6 +151,20 @@ classifier (TCN)
 k_hidden: filters, k_wind: kernel_size
 '''
 def TCNClassifier (X, k_hidden, k_wind, k_class,seed=42):
+    '''
+    TCN classifier
+    
+    Parameters
+    ----------
+    X: tensor (batch x time x feat)
+    k_hidden: int, number of filters
+    k_wind: int, kernel size
+    k_class: int, number of classes
+    
+    Returns
+    -------
+    model: complied model
+    '''
     
     tf.random.set_seed(seed)
     input_layers = [layers.Masking(mask_value=0.0, 
@@ -126,8 +185,22 @@ def TCNClassifier (X, k_hidden, k_wind, k_class,seed=42):
 '''
 regression: GRU
 '''
-def GRURegressor(X,k_layers=3, k_hidden=16, 
+def GRURegressor(X,k_layers=1, k_hidden=32, 
                  l2=0, dropout=0, lr=0.001,seed=42):
+    
+    """
+    GRU regressor for individual difference
+    
+    Parameters
+    ---------
+    X: tensor (batch x time x feat)
+    k_layers: int, number of hidden layers
+    k_hidden: int, number of units
+    
+    Returns
+    -------
+    model: complied model
+    """
     tf.random.set_seed(seed)
     regularizer = keras.regularizers.l2(l2)
     CustomGRU = partial(keras.layers.GRU,
@@ -163,6 +236,20 @@ regression: FF
 '''
 def FFRegressor (X,k_hidden,k_layers,seed=42):
     
+    """
+    FF regressor for individual difference
+    
+    Parameters
+    ---------
+    X: tensor (batch x time x feat)
+    k_layers: int, number of hidden layers
+    k_hidden: int, number of units
+    
+    Returns
+    -------
+    model: complied model
+    """
+    
     tf.random.set_seed(seed)
     input_layers = [layers.Masking(mask_value=0.0, input_shape = [X.shape[-2], X.shape[-1]])]
     
@@ -176,4 +263,35 @@ def FFRegressor (X,k_hidden,k_layers,seed=42):
     
     optimizer = keras.optimizers.Adam()
     model.compile(loss='mse', optimizer=optimizer)
+    return model
+
+
+def TCNRegressor (X, k_hidden, k_wind, seed=42):
+    '''
+    TCN classifier
+    
+    Parameters
+    ----------
+    X: tensor (batch x time x feat)
+    k_hidden: int, number of filters
+    k_wind: int, kernel size
+    
+    Returns
+    -------
+    model: complied model
+    '''
+    
+    tf.random.set_seed(seed)
+    input_layers = [layers.Masking(mask_value=0.0, 
+                                   input_shape = [None, X.shape[-1]])]
+    hidden_layers = [layers.Conv1D(filters=k_hidden,kernel_size=k_wind,
+                                   strides=1,padding='same')]
+    
+    output_layer = [layers.TimeDistributed(layers.Dense(1,activation='linear'))]
+
+    model = keras.models.Sequential(input_layers+hidden_layers+output_layer)
+    
+    optimizer = keras.optimizers.Adam()
+    
+    model.compile(loss='mse',optimizer=optimizer)
     return model
