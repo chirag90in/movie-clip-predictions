@@ -93,7 +93,8 @@ def _train(df,args,params):
         '''
         then = time.time()
         model = GRUClassifier(X_train,k_layers=params['k_layers'], 
-                              k_hidden=params['k_hidden'])
+                              k_hidden=params['k_hidden'],
+                              k_class = args.k_class)
         
         model.fit(X_train,y_train,epochs=args.num_epochs,
                   validation_split=0.2,
@@ -189,8 +190,10 @@ def _test(df,args,params):
     train classifier
     '''
     then = time.time()
-    model = GRUClassifier(X_train,k_layers=params['k_layers'], 
-                              k_hidden=params['k_hidden'])
+    model = GRUClassifier(X_train,
+                          k_layers=params['k_layers'],
+                          k_hidden=params['k_hidden'],
+                          k_class = args.k_class)
         
     model.fit(X_train,y_train,epochs=args.num_epochs,
               validation_split=0.2,
