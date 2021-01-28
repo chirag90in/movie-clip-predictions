@@ -84,7 +84,8 @@ def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3,
 classifier (FeedForward)
 k_feat: (k_hidden:)*k_layers: k_class
 '''
-def FFClassifier(X,k_hidden,k_layers,k_class):
+def FFClassifier(X,k_hidden,k_layers,k_class,seed=42):
+    tf.random.set_seed(seed)
     input_layers = [layers.Masking(mask_value=0.0, input_shape = [X.shape[-2], X.shape[-1]])]
     
     hidden_layers = []
@@ -99,6 +100,28 @@ def FFClassifier(X,k_hidden,k_layers,k_class):
     model.compile(loss=keras.losses.SparseCategoricalCrossentropy(from_logits=False),
                       optimizer=optimizer,metrics=['sparse_categorical_accuracy'])
     return model
+
+'''
+classifier (TCN)
+k_hidden: filters, k_wind: kernel_size
+'''
+def TCNClassifier (X, k_hidden, k_wind, k_class,seed=42):
+    
+    tf.random.set_seed(seed)
+    input_layers = [layers.Masking(mask_value=0.0, 
+                                   input_shape = [None, X.shape[-1]])]
+    hidden_layers = [layers.Conv1D(filters=k_hidden,kernel_size=k_wind,
+                                   strides=1,padding='same')]
+    
+    output_layer = [layers.TimeDistributed(layers.Dense(k_class,activation='softmax'))]
+
+    model = keras.models.Sequential(input_layers+hidden_layers+output_layer)
+    
+    optimizer = keras.optimizers.Adam()
+    model.compile(loss='sparse_categorical_crossentropy',
+                      optimizer=optimizer,metrics=['sparse_categorical_accuracy'])
+    return model
+
 
 '''
 regression: GRU
@@ -138,7 +161,9 @@ def GRURegressor(X,k_layers=3, k_hidden=16,
 '''
 regression: FF
 '''
-def FFRegressor (X,k_hidden,k_layers):
+def FFRegressor (X,k_hidden,k_layers,seed=42):
+    
+    tf.random.set_seed(seed)
     input_layers = [layers.Masking(mask_value=0.0, input_shape = [X.shape[-2], X.shape[-1]])]
     
     hidden_layers = []
