@@ -323,9 +323,9 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--k_fold', type=int,
         default=5, help='number of folds for cross validation')
     parser.add_argument('--k_hidden',nargs='+', type=int,
-        default=32, help='size of hidden state (default: 32)')
+        default=[32], help='size of hidden state (default: 32)')
     parser.add_argument('--k_layers', nargs='+', type=int,
-        default=1, help='number of gru layers default: 1')
+        default=[1], help='number of gru layers default: 1')
     parser.add_argument('--batch_size', type=int,
         default=32, help='batch size for training')
     parser.add_argument('--num_epochs', type=int,
