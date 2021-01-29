@@ -135,7 +135,7 @@ def FFClassifier(X,k_hidden,k_layers,k_class,seed=42):
     
     hidden_layers = []
     for ii in range(k_layers):
-        hidden_layers.append(layers.Dense(k_hidden))
+        hidden_layers.append(layers.Dense(k_hidden,activation='relu'))
     
     output_layer = [layers.Dense(k_class,activation='softmax')]
 
@@ -170,7 +170,7 @@ def TCNClassifier (X, k_hidden, k_wind, k_class,seed=42):
     input_layers = [layers.Masking(mask_value=0.0, 
                                    input_shape = [None, X.shape[-1]])]
     hidden_layers = [layers.Conv1D(filters=k_hidden,kernel_size=k_wind,
-                                   strides=1,padding='same')]
+                                   strides=1,padding='same',activation="relu")]
     
     output_layer = [layers.TimeDistributed(layers.Dense(k_class,activation='softmax'))]
 
