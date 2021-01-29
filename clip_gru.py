@@ -283,6 +283,10 @@ def run(args):
             with open(res_path, 'wb') as f:
                 pickle.dump([results, results_prob], f)
             # save model
+            
+            if not os.path.exists(os.path.dirname(mod_path)):
+                os.makedirs(os.path.dirname(mod_path),exist_ok=True)
+
             model.save(mod_path)
                 
         elif len(param_grid) > 1:
