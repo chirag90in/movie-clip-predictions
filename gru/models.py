@@ -56,7 +56,8 @@ def GRUClassifier(X, k_layers=1, k_hidden=32, k_class=15,
     return model
 
 # GRU encoder
-def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3,
+
+def GRUEncoder(X, gru_model_path, k_layers=1, k_hidden=32, k_dim = 3,
                k_class = 15,
                l2=0.001, dropout=1e-6, lr=0.006, seed=42):
     
@@ -78,11 +79,15 @@ def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3,
     
     tf.random.set_seed(seed)
     regularizer = keras.regularizers.l2(l2)
-    CustomGRU = partial(keras.layers.GRU,
-                            kernel_regularizer=regularizer,
-                            dropout=dropout,
-                            recurrent_dropout=dropout
-                           )
+    
+    ''' 
+    Transfer Learning
+    -----------------
+    Using pretrained gru model for finetuning DR_layer 
+    '''
+    gru_model = keras.models.load_model(gru_model_path)
+    gru_model.trainable = False
+    
     '''
     For masking, refer: 
         https://www.tensorflow.org/guide/keras/masking_and_padding
@@ -91,9 +96,7 @@ def GRUEncoder(X, k_layers=1, k_hidden=32, k_dim = 3,
     input_layers = [layers.Masking(mask_value=0.0, 
                                    input_shape = [None, X.shape[-1]])]
     
-    hidden_layers = []
-    for ii in range(k_layers):
-        hidden_layers.append(CustomGRU(k_hidden,return_sequences=True))
+    hidden_layers = [gru_model.layers[1]]
         
     DR_layer = [layers.TimeDistributed(layers.Dense(k_dim,activation='linear'))]
     output_layer = [layers.TimeDistributed(layers.Dense(k_class,activation='softmax'))]
