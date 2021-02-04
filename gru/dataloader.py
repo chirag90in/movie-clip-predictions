@@ -1,11 +1,20 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import pickle
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 K_RUNS = 4
 
 def _get_clip_seq(df, subject_list,args):
+    '''
+    return:
+    X: input seq (batch_size x time x feat_size)
+    y: label seq (batch_size x time)
+    X_len: len of each seq (batch_size x 1)
+    batch_size <-> number of sequences
+    time <-> max length after padding
+    '''
     features = [ii for ii in df.columns if 'feat' in ii]
 
     X = []
@@ -159,3 +168,87 @@ def _get_bhv_seq(df, subject_list, args):
     c = tf.keras.preprocessing.sequence.pad_sequences(c, padding="post",value=0)
 
     return X, X_len, y, c
+
+## Functions to load emoprox data from here on ##
+
+def _emo_class_df(args):
+    '''
+    data for approach-retreat classification
+
+    args.input_data: path/to/seg/dataset
+
+    save each timepoint as feature vector
+    append class label based on clip
+
+    return:
+    pandas df
+    '''
+    if args.near_miss:
+        with open(args.input_data,"rb") as f:
+            dataset = pickle.load(f)
+
+        n_vox = dataset['CON031']['data'].shape[1]
+        features = ['feat_%i'%ii for ii in range(n_vox)]
+        df = pd.DataFrame(columns=['Subject','timepoint']+features+['y'])
+        for subj in dataset:
+            for trial in range(dataset[subj]['data'].shape[-1]):
+                features = ['feat_%i'%ii for ii in range(n_vox)]
+                tmp_df = pd.DataFrame(dataset[subj]['data'][:,:,trial],
+                                      columns=features,
+                                      index=np.arange(dataset[subj]['data'].shape[0]))
+                tmp_df['Subject'] = int(subj.replace('CON',''))
+                tmp_df['TimePoint'] = np.arange(14)
+                tmp_df['timepoint'] = list(range(7)) + list(range(7))
+                tmp_df['y'] = tmp_df.TimePoint.apply(lambda tp: 1 if tp < 7 else 0)
+                df = pd.concat([df,tmp_df],axis=0,ignore_index=True)
+        df.timepoint = df.timepoint.astype(int)
+        df.TimePoint = df.TimePoint.astype(int)
+        df.y = df.y.astype(int)
+    else:
+        with open(args.input_data,"rb") as f:
+            df = pickle.load(f)
+    return df
+
+
+def _get_emo_seq(df, subject_list, args):
+    '''
+    return:
+    X: input seq (batch_size x time x feat_size)
+    y: label seq (batch_size x time)
+    X_len: len of each seq (batch_size x 1)
+    batch_size <-> number of sequences
+    time <-> max length after padding
+    '''
+    features = [ii for ii in df.columns if 'feat' in ii]
+
+    X = []
+    y = []
+    for subject in subject_list:
+        subj_df = df[df['Subject']==subject]
+        subj_df.reset_index(inplace=True)
+        trials = np.split(subj_df,subj_df[subj_df['timepoint']==0].index)[1:]
+        for ii,trial in enumerate(trials):
+            seq = trial[trial['Subject'] == subject][features].values
+            label_seq = trial[trial['Subject']==subject]['y'].values
+            if args.zscore:
+                # zscore each seq that goes into model
+                seq = (1/np.std(seq))*(seq - np.mean(seq))
+
+            X.append(seq)
+            y.append(label_seq)
+
+    X_len = tf.convert_to_tensor([len(seq) for seq in X])
+
+    # pad sequences
+    X_padded = tf.keras.preprocessing.sequence.pad_sequences(
+        X, padding="post",
+        dtype='float'
+    )
+
+    y_padded = tf.keras.preprocessing.sequence.pad_sequences(
+        y, padding="post",
+        dtype='float'
+    )
+    y = np.array([array[0] for array in y])
+    
+    return tf.convert_to_tensor(X_padded,dtype='float32'), X_len ,tf.convert_to_tensor(y_padded,dtype='float32')
