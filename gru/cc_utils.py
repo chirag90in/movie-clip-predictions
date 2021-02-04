@@ -36,12 +36,12 @@ def _get_clip_labels():
 def _get_true_class_prob(y,y_probs,seq_len):
     
     y_prob_true = defaultdict(list)
-
+    
     for i in range(y.shape[0]):
         if int(y[i,0]) not in y_prob_true:
             y_prob_true[int(y[i,0])] = []
-        else:
-            y_prob_true[int(y[i,0])].append(y_probs[i,:seq_len[i],int(y[i,0])])
+            
+        y_prob_true[int(y[i,0])].append(y_probs[i,:seq_len[i],int(y[i,0])])
     return y_prob_true
 
 
