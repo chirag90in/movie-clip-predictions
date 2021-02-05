@@ -159,3 +159,22 @@ def _gru_test_acc(model, X, y, clip_time, k_sub):
     c_mtx = _get_confusion_matrix(y, y_hat)
     
     return a, a_t, c_mtx
+
+def _gruenc_test_traj(model, X):
+    '''
+    mask trajectories for GRUEncoder
+    X is of shape num_samples x time x ROIs
+    '''
+    # mask to ignore padding
+    mask = model.layers[0].compute_mask(X)
+    
+    # generate trajectories
+    model.trainable = False
+    new_model = keras.models.Sequential(model.layers[:-1])
+    traj = new_model.predict(X)
+    
+    # squeeze traj if traj is of shape 1 x time x ROIs
+    # i.e. num_samples = 1
+    traj = np.squeeze(traj) # time x ROIS
+    
+    return traj
