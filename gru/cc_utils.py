@@ -2,6 +2,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+import tensorflow as tf
 
 K_RUNS = 4 #number of runs for each subject
 
@@ -159,3 +160,35 @@ def _gru_test_acc(model, X, y, clip_time, k_sub):
     c_mtx = _get_confusion_matrix(y, y_hat)
     
     return a, a_t, c_mtx
+
+def _gruenc_test_traj(model, X):
+    '''
+    mask trajectories for GRUEncoder
+    X is of shape num_samples x time x ROIs
+    '''
+    # mask to ignore padding
+    mask = model.layers[0].compute_mask(X)
+    
+    # generate trajectories
+    model.trainable = False
+    new_model = keras.models.Sequential(model.layers[:-1])
+    traj = new_model.predict(X)
+    
+    # squeeze traj if traj is of shape 1 x time x ROIs
+    # i.e. num_samples = 1
+    traj = np.squeeze(traj) # time x ROIS
+    
+    return traj
+
+def _compute_saliency_maps(model, fMRI_sequence, target_class_idx):
+    '''
+    compute saliency maps:
+    1> pass fMRI_sequence to get class scores
+    2> backpropagate class score of target class
+    3> return gradients w.r.t. inputs
+    '''
+    fMRI_sequence = tf.convert_to_tensor(fMRI_sequence)
+    with tf.GradientTape() as tape:
+        tape.watch(fMRI_sequence)
+        probs = model(fMRI_sequence)[:, :, target_class_idx] # class probability score of the target class
+    return tape.gradient(probs, fMRI_sequence)
