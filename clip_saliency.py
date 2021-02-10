@@ -99,7 +99,7 @@ def _saliency(df, args):
                 gradX = _compute_saliency_maps(gru_model, X_padded, i_class)
 
             df.loc[(df['Subject']==subject) & 
-                (df['y'] == i_class), grads] = gradX
+                (df['y'] == i_class), grads] = gradX.squeeze()
 
     sal_df = df[['Subject', 'timepoint', 'y'] + grads]
     
