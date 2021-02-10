@@ -12,7 +12,6 @@ from sklearn.model_selection import KFold
 
 from gru.dataloader import _emo_class_df
 from gru.dataloader import _get_emo_seq as _get_seq
-from gru.dataloader import _get_clip_seq as _get_seq
 from gru.models import GRUClassifier
 from gru.cc_utils import _get_true_class_prob, _gru_acc, _gru_test_acc
 from utils import _info
@@ -97,7 +96,7 @@ def _train(df,args,params):
         model = GRUClassifier(X_train,k_layers=params['k_layers'], 
                               k_hidden=params['k_hidden'],
                               k_class = args.k_class,
-                              l2=0.003)
+                              l2=0.003,dropout=0.3,lr=0.006)
 
         model.fit(X_train,y_train,epochs=args.num_epochs,
                   validation_split=0.2,
@@ -198,7 +197,8 @@ def _test(df,args,params):
     model = GRUClassifier(X_train,
                           k_layers=params['k_layers'],
                           k_hidden=params['k_hidden'],
-                          k_class = args.k_class)
+                          k_class = args.k_class,
+                          l2=0.003,dropout=0.3,lr=0.006)
 
     model.fit(X_train,y_train,epochs=args.num_epochs,
               validation_split=0.2,
