@@ -184,6 +184,40 @@ def TCNClassifier (X, k_hidden, k_wind, k_class,seed=42):
                       optimizer=optimizer,metrics=['sparse_categorical_accuracy'])
     return model
 
+'''
+classifier (LogReg)
+k_feat: k_class
+'''
+def LogReg(k_dim=3,k_class=15,seed=42):
+    '''
+    Logistic regression classifier 
+    
+    Parameters
+    ----------
+    k_dim: int, number of input features
+    k_class: int, number of classes
+    
+    Returns
+    -------
+    model: complied model
+    '''
+        
+    tf.random.set_seed(seed)
+    masking_layer = [
+        layers.Masking(mask_value=0.0, input_shape=[None,k_dim])
+    ]
+    output_layer = [
+        layers.Dense(k_class,activation='softmax')
+    ]
+    model = keras.models.Sequential(
+        masking_layer + output_layer
+    )
+    
+    optimizer = keras.optimizers.Adam()
+    model.compile(loss=keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+                      optimizer=optimizer,metrics=['sparse_categorical_accuracy'])
+    return model
+
 
 '''
 regression: GRU
