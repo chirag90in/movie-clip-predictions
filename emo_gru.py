@@ -5,11 +5,15 @@ data: all runs used together
 input to model: clip time series/seq
 output: label time series
 '''
+
+# data
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import KFold
 
+# ml
+import tensorflow as tf
 from gru.dataloader import _emo_class_df
 from gru.dataloader import _get_emo_seq as _get_seq
 from gru.models import GRUClassifier
@@ -18,10 +22,12 @@ from utils import _info
 import argparse
 import pickle
 import time
+
 import os
+from gru.resources import Resource
 
-import tensorflow as tf
 
+Resource()
 # results directory
 RES_DIR = 'results/emo_gru'
 if not os.path.exists(RES_DIR):
